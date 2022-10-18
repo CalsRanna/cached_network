@@ -1,7 +1,7 @@
 # Cached Netword
 
 This is a package use to fetch data from web and write as string into cache directory. If the cache file exists, then will read data from cache file instead of web.
-Besides, it provides a widget use to view caches..
+Besides, it provides a widget use to view caches.
 
 ## Install
 
