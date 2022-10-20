@@ -7,9 +7,11 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 class CachedNetwork {
-  CachedNetwork({this.cacheDirectory}) : _dio = Dio();
+  CachedNetwork({this.cacheDirectory, this.dio}) {
+    dio ??= Dio();
+  }
   Directory? cacheDirectory;
-  final Dio _dio;
+  Dio? dio;
 
   /// Use to fetch data from network or cache file.
   ///
@@ -56,7 +58,7 @@ class CachedNetwork {
     var isRedirect = false;
     String data;
     do {
-      var response = await _dio.fetch(RequestOptions(
+      var response = await dio!.fetch(RequestOptions(
         method: method,
         path: url,
       ));

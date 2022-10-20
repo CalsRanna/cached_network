@@ -1,3 +1,7 @@
+## 0.0.3
+
+- add dio param when construct instance
+
 ## 0.0.2+1
 
 - update text style
