@@ -24,7 +24,8 @@ class _CacheViewState extends State<CacheView> {
   @override
   Widget build(BuildContext context) {
     final width = (MediaQuery.of(context).size.width - 64) / 3;
-    final ratio = width / (width + 56);
+    final ratio = width / (width + 52);
+    final style = TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12);
     return Scaffold(
       appBar: AppBar(
         actions: !isRoot
@@ -59,9 +60,10 @@ class _CacheViewState extends State<CacheView> {
                   size: width,
                 ),
                 Text(getName(files[index]), maxLines: 2),
-                Text(getDate(files[index]), maxLines: 1),
                 if (!isDirectory(files[index]))
-                  Text(getSize(files[index]), maxLines: 1)
+                  Text(getDate(files[index]), maxLines: 1, style: style),
+                if (!isDirectory(files[index]))
+                  Text(getSize(files[index]), maxLines: 1, style: style)
               ],
             ),
           ),
@@ -120,9 +122,9 @@ class _CacheViewState extends State<CacheView> {
     if (size < 1024) {
       string = '$size Bytes';
     } else if (size >= 1024 && size < 1024 * 1024) {
-      string = '${size / 1024} KB';
+      string = '${(size / 1024).toStringAsFixed(2)} KB';
     } else {
-      string = '${size / 1024 / 1024} MB';
+      string = '${(size / 1024 / 1024).toStringAsFixed(2)} MB';
     }
     return string;
   }
