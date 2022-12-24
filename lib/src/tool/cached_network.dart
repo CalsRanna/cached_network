@@ -13,14 +13,14 @@ class CachedNetwork {
   Directory? cacheDirectory;
   Dio? dio;
 
-  /// Use to fetch data from network or cache file.
+  /// Use to acquire data from network or the cached file.
   ///
   /// Allowed method is one of [GET, PUT, PATCH, DELETE].
-  /// If method is null then the default method is [GET].
+  /// If method is null, the default method is [GET].
   ///
-  /// If duration is null the the file will last forever, or should be reacquired
-  /// while duration from file created is longer than duration specified in the param.
-  Future<String> fetch(
+  /// If duration is null, the file will last forever, or should be reacquired while
+  /// duration from file created is greater than duration specified in the param.
+  Future<String> request(
     String url, {
     Duration? duration,
     String? method,
@@ -34,27 +34,28 @@ class CachedNetwork {
       hash.toString(),
     ));
     var exist = await file.exists();
-    if (exist == false || reacquire == true) {
+    if (!exist || reacquire) {
       await file.create(recursive: true);
-      var data = await _fetchFromNetwork(url, method);
+      var data = await _request(url, method);
       await file.writeAsString(data);
       return data;
     } else {
-      if (duration != null) {
-        var createdAt = file.statSync().changed;
-        var now = DateTime.now();
-        if (now.difference(createdAt).compareTo(duration) > 0) {
-          var data = await _fetchFromNetwork(url, method);
-          await file.writeAsString(data);
-          return data;
-        }
+      var stat = await file.stat();
+      if (stat.size == 0 ||
+          (duration != null && _isExpired(stat.changed, duration))) {
+        var data = await _request(url, method);
+        await file.writeAsString(data);
+        return data;
       }
       return file.readAsString();
     }
   }
 
-  /// Use to fetch data from network but do not expose.
-  Future<String> _fetchFromNetwork(String url, String? method) async {
+  /// Use to fetch data from network.
+  ///
+  /// This function will call until the resposne has no redirect url, and return value
+  /// is the content of the deepest redirect url.
+  Future<String> _request(String url, String? method) async {
     var isRedirect = false;
     String data;
     do {
@@ -68,5 +69,10 @@ class CachedNetwork {
       data = response.data;
     } while (isRedirect);
     return data;
+  }
+
+  bool _isExpired(DateTime createdAt, Duration duration) {
+    var now = DateTime.now();
+    return now.difference(createdAt).compareTo(duration) > 0;
   }
 }
