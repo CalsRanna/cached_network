@@ -7,7 +7,7 @@ void main() {
   test('Cache baidu', () async {
     WidgetsFlutterBinding.ensureInitialized();
     final network = CachedNetwork();
-    final response = await network.fetch('http://www.baidu.com');
+    final response = await network.request('http://www.baidu.com');
     expect(response, '');
   });
 }
