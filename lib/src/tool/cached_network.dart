@@ -18,8 +18,9 @@ class CachedNetwork {
   /// Allowed method is one of [GET, PUT, PATCH, DELETE].
   /// If method is null, the default method is [GET].
   ///
-  /// If duration is null, the file will last forever, or should be reacquired while
-  /// duration from file created is greater than duration specified in the param.
+  /// If duration is null, the file will last forever, or will be reacquired while
+  /// duration from file created to now is greater than duration specified in the
+  /// param.
   Future<String> request(
     String url, {
     Duration? duration,
@@ -63,7 +64,7 @@ class CachedNetwork {
         method: method,
         path: url,
       ));
-      if (response.isRedirect != null && response.isRedirect == true) {
+      if (response.isRedirect && response.isRedirect == true) {
         isRedirect = true;
       }
       data = response.data;
