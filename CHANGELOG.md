@@ -1,3 +1,8 @@
+## 1.0.2
+
+- use http instead of dio _(This is an **incompatible** update)_
+- support gbk and utf8 charset only
+
 ## 1.0.1
 
 - update dependencies

@@ -1,21 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:charset/charset.dart';
 import 'package:crypto/crypto.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 class CachedNetwork {
-  CachedNetwork({this.cacheDirectory, this.dio}) {
-    dio ??= Dio();
-  }
+  CachedNetwork({this.cacheDirectory});
+
   Directory? cacheDirectory;
-  Dio? dio;
 
   /// Use to acquire data from network or the cached file.
   ///
-  /// Allowed method is one of [GET, PUT, PATCH, DELETE].
+  /// Allowed method is one of [GET, POST].
   /// If method is null, the default method is [GET].
   ///
   /// If duration is null, the file will last forever, or will be reacquired while
@@ -23,57 +22,86 @@ class CachedNetwork {
   /// param.
   Future<String> request(
     String url, {
+    Map<String, dynamic>? body,
+    String? charset,
     Duration? duration,
     String? method,
     bool reacquire = false,
   }) async {
-    cacheDirectory ??= await getTemporaryDirectory();
-    var hash = md5.convert(utf8.encode(url));
-    var file = File(path.join(
-      cacheDirectory!.path,
-      'libCachedNetworkData',
-      hash.toString(),
-    ));
-    var exist = await file.exists();
-    if (!exist || reacquire) {
-      await file.create(recursive: true);
-      var data = await _request(url, method);
-      await file.writeAsString(data);
+    final valid = await _valid(url, duration: duration);
+    if (!valid || reacquire) {
+      final data = await _request(
+        body: body,
+        charset: charset,
+        method: method,
+        url: url,
+      );
+      await _cache(url, data);
       return data;
     } else {
-      var stat = await file.stat();
-      if (stat.size == 0 ||
-          (duration != null && _isExpired(stat.changed, duration))) {
-        var data = await _request(url, method);
-        await file.writeAsString(data);
-        return data;
-      }
+      final file = await _generate(url);
       return file.readAsString();
     }
   }
 
-  /// Use to fetch data from network.
+  /// Validate the cached file.
   ///
-  /// This function will call until the resposne has no redirect url, and return value
-  /// is the content of the deepest redirect url.
-  Future<String> _request(String url, String? method) async {
-    var isRedirect = false;
-    String data;
-    do {
-      var response = await dio!.fetch(RequestOptions(
-        method: method,
-        path: url,
-      ));
-      if (response.isRedirect && response.isRedirect == true) {
-        isRedirect = true;
-      }
-      data = response.data;
-    } while (isRedirect);
-    return data;
+  /// If the file exists and size is greater than 0, and the file is not expired,
+  ///  return true.
+  Future<bool> _valid(String url, {Duration? duration}) async {
+    final file = await _generate(url);
+    final exist = await file.exists();
+    final stat = await file.stat();
+    final size = stat.size;
+    final createdAt = stat.changed;
+    final now = DateTime.now();
+    final permanent = duration == null;
+    var expired = false;
+    if (!permanent) {
+      expired = now.difference(createdAt).compareTo(duration) > 0;
+    }
+    return exist && size > 0 && !expired;
   }
 
-  bool _isExpired(DateTime createdAt, Duration duration) {
-    var now = DateTime.now();
-    return now.difference(createdAt).compareTo(duration) > 0;
+  /// Use to generate cache file.
+  ///
+  /// The file will be saved in [cacheDirectory].
+  Future<File> _generate(String url) async {
+    cacheDirectory ??= await getTemporaryDirectory();
+    const prefix = 'libCachedNetworkData';
+    final hash = md5.convert(utf8.encode(url)).toString();
+    return File(path.join(cacheDirectory!.path, prefix, hash));
+  }
+
+  /// Use to fetch data from network.
+  ///
+  /// This function will return the plain text no matter has redirect or not.
+  Future<String> _request({
+    Map<String, dynamic>? body,
+    String? charset,
+    String? method,
+    required String url,
+  }) async {
+    final uri = Uri.parse(url);
+    http.Response response;
+    if (method?.toLowerCase() == 'post') {
+      response = await http.post(uri, body: body);
+    } else {
+      response = await http.get(uri);
+    }
+    if (charset == 'gbk') {
+      return gbk.decode(response.bodyBytes, allowMalformed: true);
+    } else {
+      return utf8.decode(response.bodyBytes, allowMalformed: true);
+    }
+  }
+
+  /// Use to cache data.
+  ///
+  /// Write content to file
+  Future<void> _cache(String url, String content) async {
+    final file = await _generate(url);
+    await file.create(recursive: true);
+    await file.writeAsString(content);
   }
 }
