@@ -1,3 +1,7 @@
+## 1.0.3
+
+- add `cached` function to check the given url is cached or not
+
 ## 1.0.2
 
 - use http instead of dio _(This is an **incompatible** update)_

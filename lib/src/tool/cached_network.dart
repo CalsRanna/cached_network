@@ -44,6 +44,15 @@ class CachedNetwork {
     }
   }
 
+  /// Check the given url is cached or not.
+  Future<bool> cached(String url) async {
+    cacheDirectory ??= await getTemporaryDirectory();
+    const prefix = 'libCachedNetworkData';
+    final hash = md5.convert(utf8.encode(url)).toString();
+    final file = File(path.join(cacheDirectory!.path, prefix, hash));
+    return file.exists();
+  }
+
   /// Validate the cached file.
   ///
   /// If the file exists and size is greater than 0, and the file is not expired,
