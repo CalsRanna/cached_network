@@ -53,6 +53,19 @@ class CachedNetwork {
     return file.exists();
   }
 
+  /// Clear all cached file.
+  Future<bool> clearCache() async {
+    try {
+      final temporaryDirectory = await getTemporaryDirectory();
+      const prefix = 'libCachedNetworkData';
+      final directory = Directory(path.join(temporaryDirectory.path, prefix));
+      await directory.delete(recursive: true);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   /// Validate the cached file.
   ///
   /// If the file exists and size is greater than 0, and the file is not expired,

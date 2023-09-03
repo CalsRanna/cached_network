@@ -1,3 +1,7 @@
+## 1.0.4
+
+- add `clearCache` function.
+
 ## 1.0.3
 
 - add `cached` function to check the given url is cached or not
