@@ -1,3 +1,7 @@
+## 1.0.5
+
+- add `timeout` property
+
 ## 1.0.4
 
 - add `clearCache` function.

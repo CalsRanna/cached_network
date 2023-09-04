@@ -8,9 +8,10 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 class CachedNetwork {
-  CachedNetwork({this.cacheDirectory});
+  CachedNetwork({this.cacheDirectory, this.timeout});
 
   Directory? cacheDirectory;
+  Duration? timeout;
 
   /// Use to acquire data from network or the cached file.
   ///
@@ -28,6 +29,7 @@ class CachedNetwork {
     String? method,
     bool reacquire = false,
   }) async {
+    timeout ??= const Duration(seconds: 10);
     final valid = await _valid(url, duration: duration);
     if (!valid || reacquire) {
       final data = await _request(
@@ -35,7 +37,7 @@ class CachedNetwork {
         charset: charset,
         method: method,
         url: url,
-      );
+      ).timeout(timeout!);
       await _cache(url, data);
       return data;
     } else {
