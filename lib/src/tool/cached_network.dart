@@ -114,9 +114,9 @@ class CachedNetwork {
       response = await http.get(uri);
     }
     if (charset == 'gbk') {
-      return gbk.decode(response.bodyBytes, allowMalformed: true);
+      return gbk.decode(response.bodyBytes);
     } else {
-      return utf8.decode(response.bodyBytes, allowMalformed: true);
+      return utf8.decode(response.bodyBytes);
     }
   }
 

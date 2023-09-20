@@ -1,3 +1,7 @@
+## 1.0.6
+
+- update `allowMalformed` to `false` to throw format exception
+
 ## 1.0.5
 
 - add `timeout` property

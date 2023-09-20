@@ -26,18 +26,17 @@ class _CacheViewState extends State<CacheView> {
     final width = (MediaQuery.of(context).size.width - 64) / 3;
     final ratio = width / (width + 52);
     final style = TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12);
+    List<Widget>? actions = [];
+    if (!isRoot) {
+      actions = [
+        IconButton(
+          onPressed: backward,
+          icon: const Icon(Icons.arrow_upward_outlined),
+        )
+      ];
+    }
     return Scaffold(
-      appBar: AppBar(
-        actions: !isRoot
-            ? [
-                IconButton(
-                  onPressed: backward,
-                  icon: const Icon(Icons.arrow_upward_outlined),
-                )
-              ]
-            : null,
-        title: const Text('Cached View'),
-      ),
+      appBar: AppBar(actions: actions, title: const Text('Cached View')),
       body: GridView.builder(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           childAspectRatio: ratio,
@@ -45,29 +44,32 @@ class _CacheViewState extends State<CacheView> {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
-        itemBuilder: (context, index) => GestureDetector(
-          onTap: () => forward(files[index]),
-          child: DefaultTextStyle.merge(
-            style: const TextStyle(fontSize: 14, height: 1),
-            textAlign: TextAlign.center,
-            child: Column(
-              children: [
-                Icon(
-                  isDirectory(files[index])
-                      ? Icons.folder_outlined
-                      : Icons.description_outlined,
-                  color: Colors.black.withOpacity(0.4),
-                  size: width,
-                ),
-                Text(getName(files[index]), maxLines: 2),
-                if (!isDirectory(files[index]))
-                  Text(getDate(files[index]), maxLines: 1, style: style),
-                if (!isDirectory(files[index]))
-                  Text(getSize(files[index]), maxLines: 1, style: style)
-              ],
+        itemBuilder: (context, index) {
+          IconData icon = Icons.description_outlined;
+          String name = getName(files[index]);
+          String date = getDate(files[index]);
+          String size = getSize(files[index]);
+          if (isDirectory(files[index])) {
+            icon = Icons.folder_outlined;
+          }
+          return GestureDetector(
+            onTap: () => forward(files[index]),
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(fontSize: 14, height: 1),
+              textAlign: TextAlign.center,
+              child: Column(
+                children: [
+                  Icon(icon, color: Colors.black.withOpacity(0.4), size: width),
+                  Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  if (!isDirectory(files[index])) ...[
+                    Text(date, maxLines: 1, style: style),
+                    Text(size, maxLines: 1, style: style)
+                  ]
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
         itemCount: files.length,
         padding: const EdgeInsets.all(16),
       ),
