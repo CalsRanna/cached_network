@@ -1,3 +1,9 @@
+## 2.0.0
+
+- add `listCaches` function
+- add `prefix` params to customize the cache directory
+- rename `cacheDirectory` into `temporaryDirectory` _(This is an **incompatible** update)_
+
 ## 1.0.6
 
 - update `allowMalformed` to `false` to throw format exception

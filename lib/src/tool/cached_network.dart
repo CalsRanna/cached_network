@@ -8,9 +8,11 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 class CachedNetwork {
-  CachedNetwork({this.cacheDirectory, this.timeout});
+  CachedNetwork({this.prefix, this.temporaryDirectory, this.timeout});
 
-  Directory? cacheDirectory;
+  String identifier = 'libCachedNetworkData';
+  String? prefix;
+  Directory? temporaryDirectory;
   Duration? timeout;
 
   /// Use to acquire data from network or the cached file.
@@ -48,19 +50,47 @@ class CachedNetwork {
 
   /// Check the given url is cached or not.
   Future<bool> cached(String url) async {
-    cacheDirectory ??= await getTemporaryDirectory();
-    const prefix = 'libCachedNetworkData';
+    temporaryDirectory ??= await getTemporaryDirectory();
     final hash = md5.convert(utf8.encode(url)).toString();
-    final file = File(path.join(cacheDirectory!.path, prefix, hash));
+    String filePath;
+    if (prefix != null) {
+      filePath = path.join(temporaryDirectory!.path, identifier, prefix, hash);
+    } else {
+      filePath = path.join(temporaryDirectory!.path, identifier, hash);
+    }
+    final file = File(filePath);
     return file.exists();
+  }
+
+  /// List all directories contains the cached files.
+  Future<List<FileSystemEntity>> listCaches() async {
+    temporaryDirectory ??= await getTemporaryDirectory();
+    String directoryPath;
+    if (prefix != null) {
+      directoryPath = path.join(temporaryDirectory!.path, identifier, prefix);
+    } else {
+      directoryPath = path.join(temporaryDirectory!.path, identifier);
+    }
+    final directory = Directory(directoryPath);
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+    }
+    return directory.listSync().where((item) {
+      return item.statSync().type == FileSystemEntityType.directory;
+    }).toList();
   }
 
   /// Clear all cached file.
   Future<bool> clearCache() async {
     try {
-      final temporaryDirectory = await getTemporaryDirectory();
-      const prefix = 'libCachedNetworkData';
-      final directory = Directory(path.join(temporaryDirectory.path, prefix));
+      temporaryDirectory ??= await getTemporaryDirectory();
+      String directoryPath;
+      if (prefix != null) {
+        directoryPath = path.join(temporaryDirectory!.path, identifier, prefix);
+      } else {
+        directoryPath = path.join(temporaryDirectory!.path, identifier);
+      }
+      final directory = Directory(directoryPath);
       await directory.delete(recursive: true);
       return true;
     } catch (error) {
@@ -89,12 +119,17 @@ class CachedNetwork {
 
   /// Use to generate cache file.
   ///
-  /// The file will be saved in [cacheDirectory].
+  /// The file will be saved in [temporaryDirectory].
   Future<File> _generate(String url) async {
-    cacheDirectory ??= await getTemporaryDirectory();
-    const prefix = 'libCachedNetworkData';
+    temporaryDirectory ??= await getTemporaryDirectory();
     final hash = md5.convert(utf8.encode(url)).toString();
-    return File(path.join(cacheDirectory!.path, prefix, hash));
+    String filePath;
+    if (prefix != null) {
+      filePath = path.join(temporaryDirectory!.path, identifier, prefix, hash);
+    } else {
+      filePath = path.join(temporaryDirectory!.path, identifier, hash);
+    }
+    return File(filePath);
   }
 
   /// Use to fetch data from network.
