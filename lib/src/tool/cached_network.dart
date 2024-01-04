@@ -62,42 +62,6 @@ class CachedNetwork {
     return file.exists();
   }
 
-  /// List all directories contains the cached files.
-  Future<List<FileSystemEntity>> listCaches() async {
-    temporaryDirectory ??= await getTemporaryDirectory();
-    String directoryPath;
-    if (prefix != null) {
-      directoryPath = path.join(temporaryDirectory!.path, identifier, prefix);
-    } else {
-      directoryPath = path.join(temporaryDirectory!.path, identifier);
-    }
-    final directory = Directory(directoryPath);
-    if (!directory.existsSync()) {
-      directory.createSync(recursive: true);
-    }
-    return directory.listSync().where((item) {
-      return item.statSync().type == FileSystemEntityType.directory;
-    }).toList();
-  }
-
-  /// Clear all cached file.
-  Future<bool> clearCache() async {
-    try {
-      temporaryDirectory ??= await getTemporaryDirectory();
-      String directoryPath;
-      if (prefix != null) {
-        directoryPath = path.join(temporaryDirectory!.path, identifier, prefix);
-      } else {
-        directoryPath = path.join(temporaryDirectory!.path, identifier);
-      }
-      final directory = Directory(directoryPath);
-      await directory.delete(recursive: true);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
   /// Validate the cached file.
   ///
   /// If the file exists and size is greater than 0, and the file is not expired,
